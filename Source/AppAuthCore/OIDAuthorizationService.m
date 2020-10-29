@@ -107,13 +107,31 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)URL:(NSURL *)URL matchesRedirectionURL:(NSURL *)redirectionURL {
   NSURL *standardizedURL = [URL standardizedURL];
   NSURL *standardizedRedirectURL = [redirectionURL standardizedURL];
-
-  return [standardizedURL.scheme caseInsensitiveCompare:standardizedRedirectURL.scheme] == NSOrderedSame
+    NSURLComponents * components = [NSURLComponents componentsWithURL:redirectionURL resolvingAgainstBaseURL:NO];
+    NSMutableDictionary * dict = NSMutableDictionary.new;
+    for(NSURLQueryItem *item in components.queryItems){
+        [dict setValue:item.value forKey: item.name];
+    }
+    BOOL a1 =  [standardizedURL.scheme caseInsensitiveCompare:standardizedRedirectURL.scheme] == NSOrderedSame
       && OIDIsEqualIncludingNil(standardizedURL.user, standardizedRedirectURL.user)
       && OIDIsEqualIncludingNil(standardizedURL.password, standardizedRedirectURL.password)
       && OIDIsEqualIncludingNil(standardizedURL.host, standardizedRedirectURL.host)
       && OIDIsEqualIncludingNil(standardizedURL.port, standardizedRedirectURL.port)
       && OIDIsEqualIncludingNil(standardizedURL.path, standardizedRedirectURL.path);
+    BOOL a2 = YES;
+    NSString * state = dict[@"state"];
+    if (state){
+        NSURL * stateURL = [[NSURL URLWithString:state] standardizedURL];
+        if (stateURL != nil){
+            a2 = [standardizedURL.scheme caseInsensitiveCompare:stateURL.scheme] == NSOrderedSame
+            && OIDIsEqualIncludingNil(standardizedURL.user, stateURL.user)
+            && OIDIsEqualIncludingNil(standardizedURL.password, stateURL.password)
+            && OIDIsEqualIncludingNil(standardizedURL.host, stateURL.host)
+            && OIDIsEqualIncludingNil(standardizedURL.port, stateURL.port)
+            && OIDIsEqualIncludingNil(standardizedURL.path, stateURL.path);
+        }
+    }
+    return a1 || a2;
 }
 
 - (BOOL)shouldHandleURL:(NSURL *)URL {
